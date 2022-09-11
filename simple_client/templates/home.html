@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Auth0 Flask impl example</title>
+  </head>
+  <body>
+    <!-- TODO include an update of the view in case of 403 or 401 -->
+    <h1 id="welcome"></h1>
+    <p><a id="logonLink" href="#">...</a></p>
+
+    <script>
+      function getSubStr(str, start, end) {
+        const result = str.match(new RegExp(start + "(.*)" + end));
+        return result != null && result.length == 2 ? result[1] : '';
+      }
+      document.addEventListener("DOMContentLoaded", async () => {
+        const accessTokenFromUrl = getSubStr(
+          window.location.href, 
+          "http://localhost/#access_token=",
+          "&scope=read%3Atest&expires_in=7200&token_type=Bearer"
+        );
+        const welcomeText = document.getElementById("welcome");
+        const logonLink = document.getElementById("logonLink");
+        if (accessTokenFromUrl == '') {
+          welcomeText.innerText = "Welcome Guest!";
+          logonLink.setAttribute("href", "/login");
+          logonLink.innerText = "Login";
+        } else {
+          const tokenCall = await fetch("http://localhost:81/api/private-permission", {
+            headers: {
+              "Authorization": `Bearer ${accessTokenFromUrl}`
+            }
+          });
+          const tokenCallRes = await tokenCall.json();
+          console.info(tokenCallRes);
+          welcomeText.innerText = `Welcome ${tokenCallRes.data.usrInfo.name}!`;
+          logonLink.setAttribute("href", "/logout");
+          logonLink.innerText = "Logout";
+        }
+      });
+    </script>
+  </body>
+</html>
